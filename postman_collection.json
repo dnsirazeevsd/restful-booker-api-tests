@@ -1,0 +1,681 @@
+{
+	"info": {
+		"_postman_id": "ad20714e-62df-45e5-9142-9c11efee6fb6",
+		"name": "Restful Booker API - тестовое задание",
+		"description": "Коллекция для тестового задания. Покрыты основные позитивные и негативные сценарии по Auth, Booking и Ping.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "baseUrl", "value": "https://restful-booker.herokuapp.com"},
+		{"key": "token", "value": ""},
+		{"key": "bookingId", "value": ""}
+	],
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Получение токена (валидные креды)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"В ответе есть токен\", function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('token');",
+									"    pm.collectionVariables.set(\"token\", json.token);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": "{{baseUrl}}/auth"
+					}
+				},
+				{
+					"name": "Неверный пароль",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// должен быть 401, а апи всегда отдает 200 (BUG-001)",
+									"pm.test(\"Есть поле reason\", function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('reason');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"wrongpass\"\n}"
+						},
+						"url": "{{baseUrl}}/auth"
+					}
+				},
+				{
+					"name": "Пустое тело запроса",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Есть поле reason\", function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('reason');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": "{{baseUrl}}/auth"
+					}
+				},
+				{
+					"name": "Без пароля",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Есть поле reason\", function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('reason');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\"\n}"
+						},
+						"url": "{{baseUrl}}/auth"
+					}
+				}
+			]
+		},
+		{
+			"name": "Booking",
+			"item": [
+				{
+					"name": "Создание брони",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Бронь создана, есть id и объект booking\", function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('bookingid');",
+									"    pm.expect(json).to.have.property('booking');",
+									"    pm.collectionVariables.set(\"bookingId\", json.bookingid);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "Accept", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstname\": \"Danil\",\n    \"lastname\": \"Fedorov\",\n    \"totalprice\": 1000,\n    \"depositpaid\": true,\n    \"bookingdates\": {\n        \"checkin\": \"2026-09-20\",\n        \"checkout\": \"2026-09-25\"\n    },\n    \"additionalneeds\": \"Breakfast\"\n}"
+						},
+						"url": "{{baseUrl}}/booking"
+					}
+				},
+				{
+					"name": "Создание брони - неполные данные",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// тут 500 вместо 400 - баг, завел отдельно (BUG-002)",
+									"pm.test(\"Сервер возвращает ошибку\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstname\": \"Danil\"\n}"
+						},
+						"url": "{{baseUrl}}/booking"
+					}
+				},
+				{
+					"name": "Создание брони - некорректная дата",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// дату вообще не валидирует, отдает 200 (BUG-006)",
+									"pm.test(\"Сервер принимает запрос без валидации даты (BUG-006)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstname\": \"Danil\",\n    \"lastname\": \"Fedorov\",\n    \"totalprice\": 500,\n    \"depositpaid\": true,\n    \"bookingdates\": {\n        \"checkin\": \"20-09-2026\",\n        \"checkout\": \"2026-09-25\"\n    }\n}"
+						},
+						"url": "{{baseUrl}}/booking"
+					}
+				},
+				{
+					"name": "Получить список всех броней",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Ответ - массив\", function () {",
+									"    pm.expect(pm.response.json()).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/booking"
+					}
+				},
+				{
+					"name": "Фильтр по имени/фамилии",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/booking?firstname=Jim&lastname=Brown",
+							"host": ["{{baseUrl}}"],
+							"path": ["booking"],
+							"query": [
+								{"key": "firstname", "value": "Jim"},
+								{"key": "lastname", "value": "Brown"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Фильтр по дате заезда",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/booking?checkin=2018-01-01",
+							"host": ["{{baseUrl}}"],
+							"path": ["booking"],
+							"query": [
+								{"key": "checkin", "value": "2018-01-01"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Фильтр по дате выезда (checkout)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// фильтр работает норм, сужает выборку. Один раз попалась бронь с битой",
+									"// датой - оказалось, хвост от BUG-006, а не баг самого фильтра",
+									"pm.test(\"Статус 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Ответ - массив\", function () {",
+									"    pm.expect(pm.response.json()).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/booking?checkout=2018-01-01",
+							"host": ["{{baseUrl}}"],
+							"path": ["booking"],
+							"query": [
+								{"key": "checkout", "value": "2018-01-01"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Фильтр с некорректной датой",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// тоже 500 вместо 400, как и в create (BUG-003)",
+									"pm.test(\"Сервер возвращает ошибку\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/booking?checkin=invalid-date",
+							"host": ["{{baseUrl}}"],
+							"path": ["booking"],
+							"query": [
+								{"key": "checkin", "value": "invalid-date"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Получить бронь по id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Есть обязательные поля\", function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('firstname');",
+									"    pm.expect(json).to.have.property('lastname');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Accept", "value": "application/json"}],
+						"url": "{{baseUrl}}/booking/{{bookingId}}"
+					}
+				},
+				{
+					"name": "Несуществующая бронь",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/booking/999999999"
+					}
+				},
+				{
+					"name": "Полное обновление брони",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Имя обновилось\", function () {",
+									"    pm.expect(pm.response.json().firstname).to.eql('Updated');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "Cookie", "value": "token={{token}}"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstname\": \"Updated\",\n    \"lastname\": \"User\",\n    \"totalprice\": 1500,\n    \"depositpaid\": false,\n    \"bookingdates\": {\n        \"checkin\": \"2026-10-01\",\n        \"checkout\": \"2026-10-05\"\n    },\n    \"additionalneeds\": \"Lunch\"\n}"
+						},
+						"url": "{{baseUrl}}/booking/{{bookingId}}"
+					}
+				},
+				{
+					"name": "Обновление без токена",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstname\": \"Hacker\",\n    \"lastname\": \"User\",\n    \"totalprice\": 100,\n    \"depositpaid\": true,\n    \"bookingdates\": {\n        \"checkin\": \"2026-01-01\",\n        \"checkout\": \"2026-01-02\"\n    }\n}"
+						},
+						"url": "{{baseUrl}}/booking/{{bookingId}}"
+					}
+				},
+				{
+					"name": "Обновление несуществующей брони",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус 405\", function () {",
+									"    pm.response.to.have.status(405);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "Cookie", "value": "token={{token}}"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstname\": \"Ghost\",\n    \"lastname\": \"User\",\n    \"totalprice\": 100,\n    \"depositpaid\": true,\n    \"bookingdates\": {\n        \"checkin\": \"2026-01-01\",\n        \"checkout\": \"2026-01-02\"\n    }\n}"
+						},
+						"url": "{{baseUrl}}/booking/999999999"
+					}
+				},
+				{
+					"name": "Частичное обновление (PATCH)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Имя изменилось\", function () {",
+									"    pm.expect(pm.response.json().firstname).to.eql('Patched');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "Cookie", "value": "token={{token}}"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstname\": \"Patched\"\n}"
+						},
+						"url": "{{baseUrl}}/booking/{{bookingId}}"
+					}
+				},
+				{
+					"name": "PATCH без токена",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstname\": \"Hacker\"\n}"
+						},
+						"url": "{{baseUrl}}/booking/{{bookingId}}"
+					}
+				},
+				{
+					"name": "PATCH несуществующей брони",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус 405\", function () {",
+									"    pm.response.to.have.status(405);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "Cookie", "value": "token={{token}}"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstname\": \"Ghost\"\n}"
+						},
+						"url": "{{baseUrl}}/booking/999999999"
+					}
+				},
+				{
+					"name": "Удаление брони",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// должно быть 200/204, а тут 201 - баг, но не критично (BUG-004)",
+									"pm.test(\"Статус 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "Cookie", "value": "token={{token}}"}
+						],
+						"url": "{{baseUrl}}/booking/{{bookingId}}"
+					}
+				},
+				{
+					"name": "Удаление без токена",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": "{{baseUrl}}/booking/1"
+					}
+				},
+				{
+					"name": "Удаление несуществующей брони",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Статус 405\", function () {",
+									"    pm.response.to.have.status(405);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{"key": "Cookie", "value": "token={{token}}"}
+						],
+						"url": "{{baseUrl}}/booking/999999999"
+					}
+				}
+			]
+		},
+		{
+			"name": "Ping",
+			"item": [
+				{
+					"name": "Health check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// тут тоже 201 вместо 200 (BUG-005)",
+									"pm.test(\"Статус 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/ping"
+					}
+				}
+			]
+		}
+	]
+}
